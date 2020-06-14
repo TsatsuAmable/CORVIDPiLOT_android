@@ -6,7 +6,15 @@
     android:layout_height="match_parent"
     tools:context=".HomeFragment">
 
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
     <ImageButton
         android:id="@+id/locationsButton"
         android:layout_width="wrap_content"
@@ -18,7 +26,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/locationsButton"
         app:layout_constraintVertical_bias="0.3"
-        tools:ignore="NotSibling" />
+        tools:ignore="NotSibling"
+        android:contentDescription="@string/locationsButton"/>
 
     <ImageButton
         android:id="@+id/messagesButton"
@@ -31,6 +40,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/messagesButton"
         app:layout_constraintVertical_bias="0.3"
-        tools:ignore="NotSibling" />
+        tools:ignore="NotSibling"
+        android:contentDescription="@string/messagesButton"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
