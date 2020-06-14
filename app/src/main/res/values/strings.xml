@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Covid Pilot</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Locations</string>
+    <string name="previous">Messages</string>
+
+    <string name="hello_first_fragment">Locations Page</string>
+    <string name="hello_second_fragment">Messages and Notifications. Arg: %1$s</string>
+    <string name="title_activity_location">LocationActivity</string>
+    <string name="tab_text_1">Tab 1</string>
+    <string name="tab_text_2">Tab 2</string>
+</resources>
