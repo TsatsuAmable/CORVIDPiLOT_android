@@ -31,4 +31,27 @@
 
     <string name="messagesButton">Go to your in app messages</string>
     <string name="locationsButton">Log your locations</string>
+
+    <string name="fine_location_access_rationale_title_text">Welcome to the Rancard Contact Tracing Pilot app!</string>
+
+    <string name="fine_location_access_rationale_details_text">This sample allows you to receive location updates while using the app.
+        \n\n
+        In order for this feature to work, please approve access to your location via the button below.
+    </string>
+
+    <string name="enable_fine_location_button_text">Approve Location Access</string>
+
+    <string name="fine_location_permission_rationale">The fine location permission is needed for core functionality.</string>
+
+    <string name="ok">OK</string>
+
+    <string name="background_location_permission_rationale">The background location permission is needed for enhanced functionality.</string>
+
+    <string name="start_receiving_location">Start Receiving Location Updates</string>
+
+    <string name="stop_receiving_location">Stop Receiving Location Updates</string>
+
+    <string name="enhance_with_background_location_button_text">Enhance with Background Location</string>
+
+
 </resources>
