@@ -53,5 +53,6 @@
 
     <string name="enhance_with_background_location_button_text">Enhance with Background Location</string>
 
+    <string name="emptyLocationDatabaseMessage">To start receiving location updates, please click the button below!</string>
 
 </resources>

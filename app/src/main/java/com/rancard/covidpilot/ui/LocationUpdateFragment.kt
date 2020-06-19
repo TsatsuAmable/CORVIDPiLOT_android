@@ -26,7 +26,7 @@ private const val TAG = "LocationUpdateFragment"
 class LocationUpdateFragment: Fragment() {
     private var activityListener: Callbacks? = null
 
-    private lateinit var  binding: FragmentLocationUpdateBinding
+    private lateinit var binding: FragmentLocationUpdateBinding
 
     private val locationUpdateViewModel by lazy {
         ViewModelProviders.of(this).get(LocationUpdateViewModel::class.java)
@@ -56,30 +56,83 @@ class LocationUpdateFragment: Fragment() {
 
         binding = FragmentLocationUpdateBinding.inflate(inflater, container, false)
 
-        binding.enableBackgroundLocationButton.setOnClickListener{
+        binding.enableBackgroundLocationButton.setOnClickListener {
             activityListener?.requestBackgroundLocationPermission()
         }
 
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?){
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         locationUpdateViewModel.receivingLocationUpdates.observe(
             viewLifecycleOwner,
-            androidx.lifecycle.Observer {
-                receivingLocation ->
+            androidx.lifecycle.Observer { receivingLocation ->
                 updateStartOrStopButtonState(receivingLocation)
             }
         )
+
+        locationUpdateViewModel.locationListLiveData.observe(
+            viewLifecycleOwner,
+            androidx.lifecycle.Observer { locations ->
+                locations?.let {
+                    Log.d(TAG, "Got ${locations.size} locations")
+                    if (locations.isEmpty()) {
+                        binding.locationOutputTextView.text =
+                            getString(R.string.emptyLocationDatabaseMessage)
+                    } else {
+                        val outputStringBuilder = StringBuilder("")
+                        for (location in locations) {
+                            outputStringBuilder.append(location.toString() + "\n")
+                        }
+
+                        binding.locationOutputTextView.text = outputStringBuilder.toString()
+                    }
+                }
+            }
+
+        )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateBackgroundButtonState()
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        if ((locationUpdateViewModel.receivingLocationUpdates.value == true)
+            && (!requireContext().hasPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
+        ) {
+            locationUpdateViewModel.stopLocationUpdates()
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+
+        activityListener = null
+    }
+
+    private fun showBackgroundButton(): Boolean {
+        return !requireContext().hasPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    }
+
+    private fun updateBackgroundButtonState() {
+        if (showBackgroundButton()) {
+            binding.enableBackgroundLocationButton.visibility = View.VISIBLE
+        } else {
+            binding.enableBackgroundLocationButton.visibility = View.GONE
+        }
     }
 
     private fun updateStartOrStopButtonState(receivingLocation: Boolean) {
         if (receivingLocation) {
             binding.startOrStopLocationUpdatesButton.apply {
                 text = getString(R.string.stop_receiving_location)
-                setOnClickListener{
+                setOnClickListener {
                     locationUpdateViewModel.stopLocationUpdates()
                 }
             }
@@ -92,6 +145,7 @@ class LocationUpdateFragment: Fragment() {
             }
         }
     }
+
     interface Callbacks {
         fun requestFineLocationPermission()
         fun requestBackgroundLocationPermission()
