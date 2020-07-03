@@ -17,11 +17,14 @@ package com.rancard.covidpilot
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender.SendIntentException
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
@@ -30,20 +33,24 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
-import com.rancard.covidpilot.MainActivity
 import com.google.android.material.snackbar.Snackbar
+import com.rancard.covidpilot.MainActivity
 import org.json.JSONObject
+import java.io.BufferedReader
 import java.io.DataOutputStream
+import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.DateFormat
 import java.util.*
+import java.util.stream.Collectors
 
 /**
  * Using location settings.
@@ -217,7 +224,6 @@ class MainActivity : AppCompatActivity() {
                 mCurrentLocation = locationResult.lastLocation
                 mLastUpdateTime = DateFormat.getTimeInstance().format(Date())
                 updateLocationUI()
-                sendPost(mCurrentLocation, mLastUpdateTime)
             }
         }
     }
@@ -234,6 +240,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
             REQUEST_CHECK_SETTINGS -> when (resultCode) {
                 Activity.RESULT_OK -> Log.i(TAG, "User agreed to make required location settings changes.")
@@ -335,6 +342,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Sets the value of the UI fields for the location latitude, longitude and last update time.
      */
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun updateLocationUI() {
         if (mCurrentLocation != null) {
             mLatitudeTextView!!.text = String.format(Locale.ENGLISH, "%s: %f", mLatitudeLabel,
@@ -343,6 +351,13 @@ class MainActivity : AppCompatActivity() {
                     mCurrentLocation!!.longitude)
             mLastUpdateTimeTextView!!.text = String.format(Locale.ENGLISH, "%s: %s",
                     mLastUpdateTimeLabel, mLastUpdateTime)
+            val sharedPref: SharedPreferences = this@MainActivity.getPreferences(Context.MODE_PRIVATE) ?: return
+            val defaultValue = getString(R.string.placeholder_id)
+            var id = sharedPref.getString(getString(R.string.saved_person_id_key), defaultValue)
+            if(id == ""){
+                id = defaultValue
+            }
+            sendPost(mCurrentLocation, mLastUpdateTime, id)
         }
     }
 
@@ -484,10 +499,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun sendPost(location: Location?, updateTime: String?) {
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun sendPost(location: Location?, updateTime: String?, id: String?) {
         val thread = Thread(Runnable {
             try {
-                val urlAddress = "https://4d21da1cd92a.ngrok.io/api/v1/location/record"
+                val urlAddress = "https://30b69cf07b33.ngrok.io/api/v1/spread/record_visit"
                 val url = URL(urlAddress)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
@@ -497,7 +513,7 @@ class MainActivity : AppCompatActivity() {
                 conn.doInput = true
                 val jsonParam = JSONObject()
                 jsonParam.put("updateTime", updateTime)
-                jsonParam.put("email", "ern.akrong@gmail.com")
+                jsonParam.put("id", id )
                 jsonParam.put("latitude", location!!.latitude)
                 jsonParam.put("longitude", location.longitude)
                 Log.i("JSON", jsonParam.toString())
@@ -507,7 +523,17 @@ class MainActivity : AppCompatActivity() {
                 os.flush()
                 os.close()
                 Log.i("STATUS", conn.responseCode.toString())
-                Log.i("MSG", conn.responseMessage)
+                val br = BufferedReader( InputStreamReader(conn.getInputStream()));
+                val personId: String = br.lines().collect(Collectors.joining())
+                Log.i("RESPONSE MSG", personId)
+                if(id != null && id == getString(R.string.placeholder_id)){
+                    Log.i(TAG, "id in shared preferences is placeholder, replace")
+                    val sharedPref: SharedPreferences = this@MainActivity.getPreferences(Context.MODE_PRIVATE) ?: return@Runnable
+                    with (sharedPref.edit()) {
+                        putString(getString(R.string.saved_person_id_key), personId)
+                        commit()
+                    }
+                }
                 conn.disconnect()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -532,7 +558,7 @@ class MainActivity : AppCompatActivity() {
         /**
          * The desired interval for location updates. Inexact. Updates may be more or less frequent.
          */
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 10000
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 40000
 
         /**
          * The fastest rate for active location updates. Exact. Updates will never be more frequent
